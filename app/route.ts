@@ -74,7 +74,8 @@ export async function GET(request: Request) {
     return new Response(screenshot, init);
   } catch (error) {
     return NextResponse.json(
-      { error: 'Something went wrong' },
+      // { error: 'Something went wrong' },
+      { error: JSON.stringify(error) },
       { status: 200 }
     );
   } finally {
