@@ -45,11 +45,17 @@ export async function GET(request: Request) {
       const imageBlob = await fetch(imageUrl).then((r) => r.blob());
       return new Response(imageBlob, init);
     } catch {
-      kv.del(encodeURIComponent(request.url));
+      await kv.del(encodeURIComponent(request.url));
     }
   }
 
   let browser;
+  let stepOne = false;
+  let stepTwo = false;
+  let stepThree = false;
+  let stepFour = false;
+  let stepFive = false;
+  let stepSix = false;
   try {
     browser = await puppeteer.launch({
       headless: 'new',
@@ -58,9 +64,13 @@ export async function GET(request: Request) {
         height,
       },
     });
+    stepOne = true;
     const page = await browser.newPage();
+    stepTwo = true;
     await page.goto(decodeURIComponent(pageUrl));
+    stepThree = true;
     const screenshot = await page.screenshot({ type: 'png' });
+    stepFour = true;
 
     const { url: storedImageUrl } = await put(
       encodeURIComponent(request.url),
@@ -69,13 +79,27 @@ export async function GET(request: Request) {
         access: 'public',
       }
     );
+    stepFive = true;
 
     await kv.set(encodeURIComponent(request.url), storedImageUrl);
+    stepSix = true;
     return new Response(screenshot, init);
   } catch (error) {
     return NextResponse.json(
       // { error: 'Something went wrong' },
-      { error: JSON.stringify(error) },
+      {
+        error: JSON.stringify({
+          error,
+          meta: {
+            stepOne,
+            stepTwo,
+            stepThree,
+            stepFour,
+            stepFive,
+            stepSix,
+          },
+        }),
+      },
       { status: 200 }
     );
   } finally {
